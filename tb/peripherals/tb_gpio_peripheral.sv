@@ -1,16 +1,14 @@
 `timescale 1ns / 1ps
 
-// =============================================================================
-// 1. MODÜL: TESTBENCH (tb_gpio_peripheral)
-// =============================================================================
+
 module tb_gpio_peripheral;
 
-    // Parametreler
+  
     localparam int AXI_ADDR_W = 8;
     localparam int AXI_DATA_W = 32;
     localparam real CLK_PERIOD = 10.0; // 100 MHz
 
-    // Yazmaç Adresleri
+   
     localparam logic [7:0] ADDR_GPIO_IDR             = 8'h00;
     localparam logic [7:0] ADDR_GPIO_ODR             = 8'h04;
     localparam logic [7:0] ADDR_GPIO_MODE            = 8'h08;
@@ -20,7 +18,7 @@ module tb_gpio_peripheral;
     localparam logic [7:0] ADDR_INTRPT_RISE_EN       = 8'h18;
     localparam logic [7:0] ADDR_INTRPT_STATUS        = 8'h28;
 
-    // Sinyaller
+    
     logic                    clk;
     logic                    rst_n;
     logic [15:0]             gpio_i;
@@ -28,7 +26,7 @@ module tb_gpio_peripheral;
     logic [15:0]             gpio_tx_en_o;
     logic                    global_interrupt_o;
 
-    // AXI4-Lite Sinyalleri
+    
     logic [AXI_ADDR_W-1:0]   s_axil_awaddr;
     logic                    s_axil_awvalid;
     logic                    s_axil_awready;
@@ -47,7 +45,7 @@ module tb_gpio_peripheral;
     logic                    s_axil_rvalid;
     logic                    s_axil_rready;
 
-    // --- UUT Örnekleme (Açık ve Net Port Bağlantıları) ---
+
     gpio_peripheral #(
         .AXI_ADDR_W(AXI_ADDR_W),
         .AXI_DATA_W(AXI_DATA_W)
@@ -77,10 +75,10 @@ module tb_gpio_peripheral;
         .s_axil_rready(s_axil_rready)
     );
 
-    // Clock Üreteci
+    
     always #(CLK_PERIOD/2.0) clk = ~clk;
 
-    // AXI Yazma Fonksiyonu
+    
     task automatic axi_write(input logic [7:0] addr, input logic [31:0] data);
     begin
         @(posedge clk);
@@ -101,7 +99,7 @@ module tb_gpio_peripheral;
     end
     endtask
 
-    // AXI Okuma Fonksiyonu
+  
     task automatic axi_read(input logic [7:0] addr, output logic [31:0] rdata);
     begin
         @(posedge clk);
@@ -119,11 +117,11 @@ module tb_gpio_peripheral;
     end
     endtask
 
-    // Test Akışı
+   
     initial begin
         logic [31:0] read_buffer;
 
-        // Sinyal Sıfırlama
+       
         clk            = 1'b0;
         rst_n          = 1'b0;
         gpio_i         = 16'h0000;
@@ -137,39 +135,38 @@ module tb_gpio_peripheral;
         s_axil_arvalid = 1'b0;
         s_axil_rready  = 1'b0;
 
-        // Reset Süreci
+        
         #(CLK_PERIOD * 5);
         rst_n = 1'b1;
         #(CLK_PERIOD * 2);
         $display("--- GpiO Test Akisi Basladi ---");
 
-        // TEST 1: Çıkış Modu ve ODR Yazma
-        axi_write(ADDR_GPIO_MODE, 32'h5555_5555); // Tüm pinler output aktif
+      
+        axi_write(ADDR_GPIO_MODE, 32'h5555_5555);
         axi_write(ADDR_GPIO_ODR, 32'hA5A5);
         
-        // TEST 2: Maskeli Set/Clear/Toggle
+        
         axi_write(ADDR_GPIO_SET, 32'hF000); 
         axi_write(ADDR_GPIO_CLEAR, 32'h000F);
         axi_write(ADDR_GPIO_TOGGLE, 32'h0FF0);
         axi_read(ADDR_GPIO_ODR, read_buffer);
 
-        // TEST 3: Giriş Modu ve Okuma (IDR)
-        axi_write(ADDR_GPIO_MODE, 32'h5555_5500); // Pin 0-3 giriş modunda
+       
+        axi_write(ADDR_GPIO_MODE, 32'h5555_5500); 
         gpio_i = 16'h5A5A;
-        #(CLK_PERIOD * 5); // Örnekleme gecikmesi
+        #(CLK_PERIOD * 5);
         axi_read(ADDR_GPIO_IDR, read_buffer);
 
-        // TEST 4: Kesme Tetikleme ve Temizleme
         axi_write(ADDR_INTRPT_RISE_EN, 32'h0001); // Pin 0 için yükselen kenar kesmesi
         gpio_i[0] = 1'b0;
         #(CLK_PERIOD * 2);
-        gpio_i[0] = 1'b1; // Kenar oluşturuldu
+        gpio_i[0] = 1'b1; 
         #(CLK_PERIOD * 5);
 
         if (global_interrupt_o) $display("[SUCCESS] Global Kesme Alindi!");
         
         axi_read(ADDR_INTRPT_STATUS, read_buffer);
-        axi_write(ADDR_INTRPT_STATUS, read_buffer); // W1C ile temizle
+        axi_write(ADDR_INTRPT_STATUS, read_buffer); 
         #(CLK_PERIOD * 2);
 
         $display("--- Tum Senaryolar Basariyla Yonetildi ---");
@@ -179,9 +176,7 @@ module tb_gpio_peripheral;
 endmodule
 
 
-// =============================================================================
-// 2. MODÜL: TASARIM ÇEKİRDEĞİ (gpio_peripheral) - Vivado Bulabilsin Diye Altına Eklendi
-// =============================================================================
+
 module gpio_peripheral #(
     parameter int AXI_ADDR_W = 8,
     parameter int AXI_DATA_W = 32
