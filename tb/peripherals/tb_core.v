@@ -2,13 +2,12 @@
 
 module tb_core();
 
-    // --- 1. Sinyal Tanımlamaları ---
     reg clk_i_0 = 0;
     reg rst_ni_0 = 0;
-    reg UART_0_rxd = 1; // Boşta (idle) durumunda UART girişi genellikle 1'dir
+    reg UART_0_rxd = 1; 
     wire UART_0_txd;
     
-    // Inout portlar için (GPIO, I2C, SPI)
+
     wire [31:0] gpio_rtl_0_tri_io;
     wire iic_rtl_0_scl_io;
     wire iic_rtl_0_sda_io;
@@ -18,14 +17,12 @@ module tb_core();
     wire spi_rtl_0_io3_io;
     wire [0:0] spi_rtl_0_ss_io;
 
-    // Diğer SPI sinyalleri
+  
  
 
-    // --- 2. Saat Üretimi (Clock Generation) ---
-    // 100MHz bir saat sinyali için (10ns periyot) ⚡
     always #5 clk_i_0 = ~clk_i_0;
 
-    // --- 3. Tasarımın Bağlanması (UUT Instantiation) ---
+
     gozlem_design_2_wrapper uut (
         .UART_0_rxd(UART_0_rxd),
         .UART_0_txd(UART_0_txd),
@@ -42,17 +39,17 @@ module tb_core();
         .spi_rtl_0_ss_io(spi_rtl_0_ss_io)
     );
 
-    // --- 4. Test Senaryosu ---
+  
     initial begin
-        // Sistem başlangıç durumu
-        rst_ni_0 = 0; // Reset aktif (Low-active)
+     
+        rst_ni_0 = 0; 
         #100;
         
-        // Reseti kaldırıyoruz
+       
         rst_ni_0 = 1;
         $display("Sistem resetten çıktı...");
 
-        // Buraya test senaryolarını ekleyeceğiz
+        // Buraya test senaryoları
         #1000;
         
         $display("Simülasyon tamamlandı.");
