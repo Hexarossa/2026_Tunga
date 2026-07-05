@@ -5,7 +5,6 @@ module tb_timer_peripheral();
     logic        clk;
     logic        rst_n;
     
-    // AXI Signalleri
     logic [11:0] s_axil_awaddr;
     logic        s_axil_awvalid;
     logic        s_axil_awready;
@@ -24,14 +23,11 @@ module tb_timer_peripheral();
     logic        s_axil_rvalid;
     logic        s_axil_rready;
 
-    // UUT Çağrısı
     timer_peripheral uut (.*);
 
-    // 100 MHz Saat Üretimi
     initial clk = 0;
     always #5 clk = ~clk;
 
-    // AXI Bus Görevleri (Tasks)
     task axi_write(input logic [7:0] addr, input logic [31:0] data);
         begin
             s_axil_awaddr  = {4'h0, addr};
@@ -71,11 +67,9 @@ module tb_timer_peripheral();
         end
     endtask
 
-    // --- Ana Test Senaryosu ---
     logic [31:0] read_buffer;
     
     initial begin
-        // Sinyal İlklendirmesi
         rst_n          = 1'b0;
         s_axil_awaddr  = '0;
         s_axil_awvalid = 1'b0;
@@ -91,23 +85,19 @@ module tb_timer_peripheral();
         rst_n = 1'b1;
         #40;
         
-        $display("======= TEKNOFEST 2026 TIMER PROGRAMMABLE TEST BAŞLADI =======");
+        $display("TEST BAŞLADI");
         
-        // 1. Konfigürasyon: Prescaler = 2, Auto-Reload = 5, Mod = Yukarı (1)
         $display("[TB] Konfigürasyon yazmaçları yükleniyor...");
-        axi_write(8'h00, 32'd2); // TIM_PRE = 2 (Her 3 clockta bir 1 artacak)
-        axi_write(8'h04, 32'd5); // TIM_ARE = 5
-        axi_write(8'h10, 32'd1); // TIM_MOD = Yukarı (1)
+        axi_write(8'h00, 32'd2); 
+        axi_write(8'h04, 32'd5); 
+        axi_write(8'h10, 32'd1); 
         
-        // 2. Timer'ı Ateşle (TIM_ENA = 1)
-        $display("[TB] Timer aktif ediliyor...");
+        $display("[TB] Timer aktif ediliyor");
         axi_write(8'h0C, 32'd1);
         
-        // Bir süre sayacı koştur
         #300;
         
-        // 3. Sayacı oku ve kontrol et (Self-Checking)
-        axi_read(8'h14, read_buffer); // TIM_CNT Oku
+        axi_read(8'h14, read_buffer); 
         $display("[TB] Güncel Sayaç Değeri (TIM_CNT): %d", read_buffer);
         
         if (read_buffer > 0 && read_buffer <= 5) begin
@@ -116,19 +106,17 @@ module tb_timer_peripheral();
             $display("[FAIL] Sayaç kilitlenmiş veya hatalı: %d", read_buffer);
         end
 
-        // 4. Auto-Reload ve Event Kontrolü için bekle
         #400;
-        axi_read(8'h18, read_buffer); // TIM_EVN Oku (Kaç kere taştı?)
+        axi_read(8'h18, read_buffer); 
         $display("[TB] Tetiklenen Toplam Event Sayısı (TIM_EVN): %d", read_buffer);
         
         if (read_buffer > 0) begin
-            $display("[PASS] Auto-Reload ve Event mekanizması başarıyla çalıştı!");
+            $display("[PASS] Auto Reload ve Event mekanizması başarıyla çalıştı");
         end else begin
             $display("[FAIL] Event üretilemedi, FSM adres taşmasını algılayamadı.");
         end
 
-        // 5. Temizleme Testi (TIM_CLR = 1)
-        $display("[TB] Sayaç sıfırlama (Clear) komutu basılıyor...");
+        $display("[TB] Clear komutu basılıyor...");
         axi_write(8'h08, 32'd1);
         #10;
         axi_read(8'h14, read_buffer);
@@ -138,7 +126,7 @@ module tb_timer_peripheral();
             $display("[FAIL] Sıfırlama komutuna rağmen sayaç sıfırlanmadı: %d", read_buffer);
         end
 
-        $display("======= TIMER DOĞRULAMA TESTİ TAMAMLANDI =======");
+        $display("TEST TAMAMLANDI ");
         $finish;
     end
 
