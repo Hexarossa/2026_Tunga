@@ -2,15 +2,14 @@
 
 module tb_axi_qspi();
 
-    // --- Parametreler ---
+
     parameter integer C_S00_AXI_DATA_WIDTH = 32;
     parameter integer C_S00_AXI_ADDR_WIDTH = 4; // 4 bit = 16 byte adres alanı (0x0, 0x4, 0x8, 0xC)
 
-    // --- Saat ve Reset Sinyalleri ---
+
     reg s00_axi_aclk = 0;
     reg s00_axi_aresetn = 0;
 
-    // --- AXI-Lite Master (Testbench) Sinyalleri ---
     reg [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr = 0;
     reg [2 : 0] s00_axi_awprot = 0;
     reg  s00_axi_awvalid = 0;
@@ -21,7 +20,7 @@ module tb_axi_qspi();
     wire s00_axi_wready;
     wire [1 : 0] s00_axi_bresp;
     wire s00_axi_bvalid;
-    reg  s00_axi_bready = 1; // Her zaman yanıt almaya hazırız
+    reg  s00_axi_bready = 1; 
     
     reg [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_araddr = 0;
     reg [2 : 0] s00_axi_arprot = 0;
@@ -32,21 +31,20 @@ module tb_axi_qspi();
     wire s00_axi_rvalid;
     reg  s00_axi_rready = 1;
 
-    // --- QSPI Dış Dünya Sinyalleri ---
+  
     wire SCLK_pad;
     wire CS_pad;
 //    wire IO0_pad, IO1_pad, IO2_pad, IO3_pad;
 wire [3:0] dq_pad;
 
-    // --- Saat Üretimi (100 MHz) ---
     always #5 s00_axi_aclk = ~s00_axi_aclk;
 
-    // --- UUT: Kendi AXI IP'n ---
+ 
     axi_qspi_T_v1_0 # ( 
         .C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
         .C_S00_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
     ) uut (
-        // QSPI Portları
+    
         .SCLK_pad(SCLK_pad),
         .CS_pad(CS_pad),
 //        .IO0_pad(IO0_pad),
@@ -78,7 +76,6 @@ wire [3:0] dq_pad;
         .s00_axi_rready(s00_axi_rready)
     );
 
-    // --- Akıllı Kukla (Ajan) Flash Modeli ---
  smart_dummy_flash flash_memory (
         .S          (CS_pad),
         .C_         (SCLK_pad),
@@ -88,9 +85,7 @@ wire [3:0] dq_pad;
         .DQ3        (dq_pad[3])
     );
 
-    // =========================================================
-    // AXI WRITE TASK (Bunu bir işlemci gibi kullanacağız)
-    // =========================================================
+ 
     task axi_write;
         input [C_S00_AXI_ADDR_WIDTH-1:0] addr;
         input [C_S00_AXI_DATA_WIDTH-1:0] data;
@@ -106,20 +101,18 @@ wire [3:0] dq_pad;
             @(posedge s00_axi_aclk);
             s00_axi_awvalid <= 0;
             
-            // Data kabul edilene kadar bekle
             wait(s00_axi_wready == 1);
             @(posedge s00_axi_aclk);
             s00_axi_wvalid <= 0;
             
-            // Response gelene kadar bekle
+         
             wait(s00_axi_bvalid == 1);
             @(posedge s00_axi_aclk);
         end
     endtask
 
-    // =========================================================
-    // TEST SENARYOSU
-    // =========================================================
+
+
     initial begin
         $display("====================================================");
         $display("[%0t] AXI-Lite IP Testi Basliyor...", $time);
@@ -131,13 +124,10 @@ wire [3:0] dq_pad;
         s00_axi_aresetn = 1;
         #50;
 
-        // VARSAYILAN REGISTER HARİTASI (Kendi tasarımına göre adresleri uyarla)
         // Offset 0x00 (slv_reg0) : Kontrol Register (Örn: Bit 0 = Start, Bit 2:1 = Mode, Bit 3 = TX_EN)
         // Offset 0x04 (slv_reg1) : TX FIFO Data Register
         
-        // ---------------------------------------------------------
-        // TEST 1: 1x Modunda (0x03) Komut Gönderimi
-        // ---------------------------------------------------------
+   
         $display("\n[%0t] TEST 1: TX FIFO'ya Veri Yaziliyor (0x03)...", $time);
         axi_write(4'h8, 32'h00000003); // slv_reg1'e (FIFO) 0x03 verisini yaz
         
@@ -149,11 +139,9 @@ wire [3:0] dq_pad;
         // slv_reg0: Start bitini sıfırla (0x8)
         axi_write(4'h0, 32'h00000008); 
         
-        #500; // İşlemin bitmesi için bekle
+        #500; 
 
-        // ---------------------------------------------------------
-        // TEST 2: 4x Modunda (0x6B) Komut Gönderimi
-        // ---------------------------------------------------------
+      
         $display("\n[%0t] TEST 2: TX FIFO'ya Veri Yaziliyor (0x6B)...", $time);
         axi_write(4'h8, 32'h0000006B); 
         
@@ -172,7 +160,7 @@ wire [3:0] dq_pad;
     end
 endmodule
 
-// --- KUKLA FLASH MODELİ (Burada kalacak) ---
+
 module smart_dummy_flash (
     input S,          
     input C_,         
